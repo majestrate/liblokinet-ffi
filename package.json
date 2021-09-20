@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "description": "liblokinet ffi wrapper",
   "main": "node/lokinet.js",
-  "scripts": {},
+  "gypfile": true,
+  "scripts": {
+    "install" : "cmake-js compile"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxen-io/liblokinet-ffi.git"
@@ -15,6 +18,7 @@
   },
   "homepage": "https://github.com/oxen-io/liblokinet-ffi#readme",
   "dependencies": {
-    "ffi-napi": "^4.0.3"
+    "bindings": "~1.2.1",
+    "node-addon-api": "^3.0.0"
   }
 }
