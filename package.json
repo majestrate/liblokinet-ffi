@@ -5,7 +5,7 @@
   "main": "node/lokinet.js",
   "gypfile": true,
   "scripts": {
-    "install" : "cmake-js compile"
+    "install": "cmake-js compile"
   },
   "repository": {
     "type": "git",
@@ -19,6 +19,7 @@
   "homepage": "https://github.com/oxen-io/liblokinet-ffi#readme",
   "dependencies": {
     "bindings": "~1.2.1",
+    "cmake-js": "^6.2.1",
     "node-addon-api": "^3.0.0"
   }
 }
