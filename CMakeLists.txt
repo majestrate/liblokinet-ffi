@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.9)
 cmake_policy(SET CMP0042 NEW)
 set (CMAKE_CXX_STANDARD 17)
 
-project (liblokinet-nodejs)
+project (liblokinet_js)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/external/lokinet)
 

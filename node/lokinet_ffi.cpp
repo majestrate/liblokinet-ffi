@@ -29,22 +29,50 @@ namespace lokinet
       if (auto err = lokinet_context_start(m_Context.get()))
       {
         Napi::Error::New(env, strerror(err)).ThrowAsJavaScriptException();
-        return env.Null();
+        return env.Undefined();
       }
-      return env.Null();
+
+      while (lokinet_wait_for_ready(100, m_Context.get()))
+        ;
+
+      return env.Undefined();
     }
 
     Napi::Value
     Stop(const Napi::CallbackInfo& info)
     {
       lokinet_context_stop(m_Context.get());
-      return info.Env().Null();
+      return info.Env().Undefined();
     }
 
     Napi::Value
     Addr(const Napi::CallbackInfo& info)
     {
       return Napi::String::New(info.Env(), lokinet_address(m_Context.get()));
+    }
+
+    Napi::Value
+    Bootstrap(const Napi::CallbackInfo& info)
+    {
+      auto env = info.Env();
+      if (info.Length() != 1)
+      {
+        Napi::Error::New(env, "Expected exactly one argument").ThrowAsJavaScriptException();
+        return env.Undefined();
+      }
+      if (not info[0].IsArrayBuffer())
+      {
+        Napi::Error::New(env, "Expected an ArrayBuffer").ThrowAsJavaScriptException();
+        return env.Undefined();
+      }
+
+      Napi::ArrayBuffer buf = info[0].As<Napi::ArrayBuffer>();
+      if (auto err = lokinet_add_bootstrap_rc(
+              reinterpret_cast<const char*>(buf.Data()), buf.ByteLength(), m_Context.get()))
+      {
+        Napi::Error::New(env, strerror(err)).ThrowAsJavaScriptException();
+      }
+      return env.Undefined();
     }
 
    public:
@@ -55,6 +83,7 @@ namespace lokinet
           env,
           "Context",
           {InstanceMethod("start", &Context::Start),
+           InstanceMethod("bootstrap", &Context::Bootstrap),
            InstanceMethod("stop", &Context::Stop),
            InstanceMethod("addr", &Context::Addr)});
 
@@ -64,8 +93,8 @@ namespace lokinet
       return func;
     }
 
-    Context(const Napi::CallbackInfo& info)
-        : Napi::ObjectWrap<Context>{info}, m_Context{lokinet_context_new()}
+    Context(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Context>{info},
+                                              m_Context{lokinet_context_new()}
     {}
   };
 }  // namespace lokinet
