@@ -7,9 +7,13 @@ project (liblokinet-nodejs)
 add_subdirectory(${CMAKE_SOURCE_DIR}/external/lokinet)
 
 include_directories(${CMAKE_JS_INC})
-add_library(${PROJECT_NAME} SHARED node/lokinet_ffi.c ${CMAKE_JS_SRC})
+add_library(${PROJECT_NAME} SHARED node/lokinet_ffi.c external/lokinet/llarp/lokinet_shared.cpp ${CMAKE_JS_SRC})
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
-target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB} lokinet-shared)
+target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB} liblokinet)
+if(WIN32)
+  target_link_libraries(${PROJECT_NAME} PUBLIC ws2_32 iphlpapi -fstack-protector)
+endif()
+add_log_tag(${PROJECT_NAME})
 
 # Include Node-API wrappers
 execute_process(COMMAND node -p "require('node-addon-api').include"

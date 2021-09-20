@@ -12,8 +12,12 @@ get submdoules:
 
 nodejs:
 
-    $ npm run compile
-    
+    $ npm install
+
+nodejs (faster):
+
+    $ CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) npm install
+
 python:
 
     $ python3 setup.py build
