@@ -4,8 +4,9 @@
   "description": "liblokinet ffi wrapper",
   "main": "node/lokinet.js",
   "scripts": {
-    "compile": "cmake-js compile --CDSTATIC_LINK=ON --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF",
-    "install": "npm install"
+    "clean": "cmake-js clean",
+    "compile": "cmake-js build --CDSTATIC_LINK=ON --CDBUILD_SHARED_LIBS=OFF --CDBUILD_LIBLOKINET=ON --CDWITH_LTO=OFF --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF --CDFORCE_OXENMQ_SUBMODULE=ON --CDWITH_BOOTSTRAP=OFF",
+    "install": "npm run clean && npm run compile"
   },
   "repository": {
     "type": "git",
@@ -21,5 +22,9 @@
     "bindings": "~1.2.1",
     "cmake-js": "^6.2.1",
     "node-addon-api": "^3.0.0"
+  },
+  "cmake-js" : {
+    "runtime": "electron",
+    "runtimeVersion": "14.0.0"
   }
 }
