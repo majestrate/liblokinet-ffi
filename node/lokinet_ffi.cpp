@@ -12,11 +12,7 @@ namespace lokinet
       void
       operator()(lokinet_context* ctx) const
       {
-        if (ctx)
-        {
-          lokinet_context_stop(ctx);
-          lokinet_context_free(ctx);
-        }
+        lokinet_context_free(ctx);
       }
     };
 
@@ -41,7 +37,7 @@ namespace lokinet
     Napi::Value
     Stop(const Napi::CallbackInfo& info)
     {
-      lokinet_context_stop(m_Context.get());
+      m_Context.reset();
       return info.Env().Undefined();
     }
 
@@ -93,8 +89,8 @@ namespace lokinet
       return func;
     }
 
-    Context(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Context>{info},
-                                              m_Context{lokinet_context_new()}
+    Context(const Napi::CallbackInfo& info)
+        : Napi::ObjectWrap<Context>{info}, m_Context{lokinet_context_new()}
     {}
   };
 }  // namespace lokinet

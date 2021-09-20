@@ -3,6 +3,8 @@
 import bindings from 'bindings';
 import fetch from 'node-fetch';
 
+import { readFile } from 'fs/promises';
+
 const lokinet = bindings('liblokinet_js');
 
 const make_buffer = (str) => {
@@ -15,8 +17,10 @@ const runit = async () => {
   let ctx = new lokinet.Context();
 
   console.log("getting bootstrap...");
-  const resp = await fetch('https://seed.lokinet.org/lokinet.signed');
-  const rc = make_buffer(await resp.text());
+  // const resp = await fetch('https://seed.lokinet.org/lokinet.signed');
+  // const rc = make_buffer(await resp.text());
+  const data = await readFile('bootstrap.signed');
+  const rc = new Uint8Array(data).buffer;
 
   ctx.bootstrap(rc);
   console.log("bootstrapped");
