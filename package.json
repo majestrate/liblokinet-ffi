@@ -1,0 +1,20 @@
+{
+  "name": "liblokinet",
+  "version": "0.1.0",
+  "description": "liblokinet ffi wrapper",
+  "main": "node/lokinet.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oxen-io/liblokinet-ffi.git"
+  },
+  "author": "Oxen Project",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/oxen-io/liblokinet-ffi/issues"
+  },
+  "homepage": "https://github.com/oxen-io/liblokinet-ffi#readme",
+  "dependencies": {
+    "ffi-napi": "^4.0.3"
+  }
+}
