@@ -21,6 +21,13 @@
     }                                                                                          \
   } while (0)
 
+
+static napi_value
+CallTheShit(napi_env env, napi_callback_info info) {
+  // Do some shit.
+  return NULL;
+}
+
 napi_value
 create_liblokinet(napi_env env)
 {
@@ -31,9 +38,9 @@ create_liblokinet(napi_env env)
   NAPI_CALL(
       env,
       napi_create_function(
-          env, "doSomethingUseful", NAPI_AUTO_LENGTH, DoSomethingUseful, NULL, &exported_function));
+          env, "callTheShit", NAPI_AUTO_LENGTH, CallTheShit, NULL, &exported_function));
 
-  NAPI_CALL(env, napi_set_named_property(env, result, "doSomethingUseful", exported_function));
+  NAPI_CALL(env, napi_set_named_property(env, result, "callTheShit", exported_function));
 
   return result;
 }
