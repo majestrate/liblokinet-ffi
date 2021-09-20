@@ -12,7 +12,7 @@ get submdoules:
 
 nodejs:
 
-    $ npm compile
+    $ npm run compile
     
 python:
 

@@ -4,7 +4,8 @@
   "description": "liblokinet ffi wrapper",
   "main": "node/lokinet.js",
   "scripts": {
-    "install": "cmake-js compile --CDSTATIC_LINK=ON --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF"
+    "compile": "cmake-js compile --CDSTATIC_LINK=ON --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF",
+    "install": "npm install"
   },
   "repository": {
     "type": "git",
