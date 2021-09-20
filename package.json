@@ -2,7 +2,6 @@
   "name": "liblokinet",
   "version": "0.1.0",
   "description": "liblokinet ffi wrapper",
-  "main": "node/lokinet.js",
   "scripts": {
     "clean": "cmake-js clean",
     "dev:compile": "cmake-js build -m -g --debug --CDSTATIC_LINK=ON --CDBUILD_SHARED_LIBS=OFF --CDBUILD_LIBLOKINET=OFF --CDWITH_SYSTEMD=OFF --CDWITH_LTO=OFF --CDNATIVE_BUILD=OFF --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF --CDFORCE_OXENMQ_SUBMODULE=ON --CDWITH_BOOTSTRAP=OFF --CDBUILD_DAEMON=OFF",
