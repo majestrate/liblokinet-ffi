@@ -20,9 +20,7 @@
   "bugs": {
     "url": "https://github.com/majestrate/liblokinet-ffi/issues"
   },
-  "files": [
-    "node/lokinet.js"
-  ],
+  "main": "lokinet.js",
   "homepage": "https://github.com/majestrate/liblokinet-ffi#readme",
   "dependencies": {
     "bindings": "~1.2.1",
