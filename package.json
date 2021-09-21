@@ -13,14 +13,14 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/oxen-io/liblokinet-ffi.git"
+    "url": "git+https://github.com/majestrate/liblokinet-ffi.git"
   },
-  "author": "Oxen Project",
+  "author": "Jeff Becker",
   "license": "GPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/oxen-io/liblokinet-ffi/issues"
+    "url": "https://github.com/majestrate/liblokinet-ffi/issues"
   },
-  "homepage": "https://github.com/oxen-io/liblokinet-ffi#readme",
+  "homepage": "https://github.com/majestrate/liblokinet-ffi#readme",
   "dependencies": {
     "bindings": "~1.2.1",
     "cmake-js": "^6.2.1",
