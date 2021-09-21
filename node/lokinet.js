@@ -31,7 +31,7 @@ const runit = async () => {
   console.log("Started as " + ctx.addr());
 
   const stream_info = ctx.outbound_stream("dw68y1xhptqbhcm5s8aaaip6dbopykagig5q5u1za4c7pzxto77y.loki:80");
-  console.log(`got stream info: ${stream_info.port}`);
+  console.log(`got stream info: ${stream_info.host}:${stream_info.port}`);
 
 
   const end = () => {
