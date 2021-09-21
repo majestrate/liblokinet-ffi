@@ -2,9 +2,8 @@ import { Lokinet } from './lokinet.js';
 import fetch from 'node-fetch';
 import { get } from 'http';
 
-const runit = async () => {
-
-  let ctx = new Lokinet();
+const runit = async (opts) => {
+  let ctx = new Lokinet(opts);
 
   await ctx.start();
   const host = await ctx.hostname();
@@ -32,3 +31,4 @@ const runit = async () => {
 };
 
 await runit();
+await runit({alwaysEmbed: true});
