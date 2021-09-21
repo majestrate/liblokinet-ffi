@@ -3,7 +3,7 @@
 import bindings from 'bindings';
 import { readFile } from 'fs/promises';
 import { connect } from 'net';
-import { Agent } from 'http';
+import { Agent } from 'https';
 
 const lokinet = bindings('liblokinet_js');
 
@@ -17,7 +17,8 @@ const _resolver = new dns.Resolver();
 _resolver.setServers(['127.3.2.1', '127.0.0.1']);
 
 
-
+/// @brief turn hex to base32z
+export const hex_to_base32z = lokinet.hex_to_base32z;
 
 //// @brief a lokinet wrapper that will spawn a liblokinet if an external lokinet is not detected
 export class Lokinet

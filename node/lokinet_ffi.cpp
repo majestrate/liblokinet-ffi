@@ -424,12 +424,33 @@ namespace lokinet
         : Napi::ObjectWrap<Context>{info}, m_Context{lokinet_context_new()}
     {}
   };
+
+  Napi::Value
+  HexToBase32z(const Napi::CallbackInfo& info)
+  {
+    auto env = info.Env();
+    if (info.Length() != 1)
+    {
+      Napi::Error::New(env, "Expected exactly 1 argument").ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
+    if (not info[0].IsString())
+    {
+      Napi::Error::New(env, "Argument not a string").ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
+    const std::string hex = info[0].As<Napi::String>();
+    return Napi::String::New(env, lokinet_hex_to_base32z(hex.c_str()));
+  }
+
 }  // namespace lokinet
 
 static Napi::Object
 Init(Napi::Env env, Napi::Object exports)
 {
   exports.Set(Napi::String::New(env, "Context"), lokinet::Context::Init(env, exports));
+  exports.Set(
+      Napi::String::New(env, "hex_to_base32z"), Napi::Function::New<lokinet::HexToBase32z>(env));
   return exports;
 }
 
