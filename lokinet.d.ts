@@ -1,6 +1,6 @@
 
 
-export default class Lokinet
+export class Lokinet
 {
     constructor(opts: any);
     localip() : Promise<string>;
