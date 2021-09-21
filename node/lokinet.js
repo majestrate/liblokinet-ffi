@@ -29,6 +29,7 @@ export class Lokinet
 
   /// @brief construct a lokinet context, if a lokinet is detected externally it will use it
   /// @params opts can be null or a dict with the keys `bootstrap` which points to the bootstrap.signed file
+  /// @params opts if opts contains alwaysEmbed and is set to true we will always use liblokinet embeded mode
   constructor(opts)
   {
     this._opts = opts || {};
@@ -69,9 +70,16 @@ export class Lokinet
   /// @brief start lokinet
   async start()
   {
-    this._hasExternal = await this._checkForExternalLokinet();
-    if(this._hasExternal)
-      return;
+    if(this._opts.alwaysEmbed)
+    {
+      // skip embedded check if we are configured to always run as embedded
+    }
+    else
+    {
+      this._hasExternal = await this._checkForExternalLokinet();
+      if(this._hasExternal)
+        return;
+    }
 
     if(this._ctx)
     {
