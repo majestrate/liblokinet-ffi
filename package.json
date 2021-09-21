@@ -6,8 +6,8 @@
     "clean": "cmake-js clean",
     "dev:compile": "cmake-js build -m -g --debug --CDSTATIC_LINK=ON --CDBUILD_SHARED_LIBS=OFF --CDBUILD_LIBLOKINET=OFF --CDWITH_SYSTEMD=OFF --CDWITH_LTO=OFF --CDNATIVE_BUILD=OFF --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF --CDFORCE_OXENMQ_SUBMODULE=ON --CDWITH_BOOTSTRAP=OFF --CDBUILD_DAEMON=OFF",
     "compile": "cmake-js build -m -g --CDSTATIC_LINK=ON --CDBUILD_SHARED_LIBS=OFF --CDBUILD_LIBLOKINET=OFF --CDWITH_SYSTEMD=OFF --CDWITH_LTO=ON --CDNATIVE_BUILD=OFF --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF --CDFORCE_OXENMQ_SUBMODULE=ON --CDWITH_BOOTSTRAP=OFF --CDBUILD_DAEMON=OFF",
-    "install": "npm run clean && npm run gentypes && npm run compile",
-    "gentypes": "tsc --lib ES2015 lokinet.d.ts",
+    "install": "npm run clean && npm run compile",
+    "gentypes": "npm exec tsc lokinet.d.ts",
     "start": "npm run dev:compile && node node/demo.js",
     "format": "clang-format -i node/lokinet_ffi.cpp"
   },
@@ -27,7 +27,8 @@
   "dependencies": {
     "bindings": "~1.2.1",
     "cmake-js": "^6.2.1",
-    "node-addon-api": "^3.0.0"
+    "node-addon-api": "^3.0.0",
+    "typescript": "^4.4.3"
   },
   "cmake-js": {
     "runtime": "electron",
