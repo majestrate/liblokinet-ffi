@@ -12,20 +12,67 @@ import { EventEmitter } from 'events';
 
 const lokinet = bindings('liblokinet_js');
 
+
+import { promises } from 'dns';
+
+const dns = promises;
+
+const _resolver = new dns.Resolver();
+
+
+
+
+
+//// @brief a lokinet wrapper that will spawn a liblokinet if an external lokinet is not detected
 export class Lokinet
 {
 
-  /// @brief construct a lokinet
+  /// @brief construct a lokinet context, if a lokinet is detected externally it will use it
   /// @params opts can be null or a dict with the keys `bootstrap` which points to the bootstrap.signed file
   constructor(opts)
   {
     this._opts = opts || {};
     this._ctx = null;
+    this._hasExternal = false;
+  }
+
+  /// @brief get the local lokinet ip
+  async localip()
+  {
+
+    let addrs = [];
+    try
+    {
+        addrs = await _resolver.resolveCname("localhost.loki");
+    }
+    catch(e) {};
+    if(addrs.length > 0)
+    {
+      const localaddrs = await _resolver.resolve(addrs[0]);
+      return localaddrs[0];
+    }
+    else
+      return "127.0.0.1";
+  }
+
+  async _checkForExternalLokinet()
+  {
+    let addrs  = [];
+    try
+    {
+      addrs = await _resolver.resolveCname("localhost.loki");
+    }
+    catch(e) {};
+    return addrs.length > 0;
   }
 
   /// @brief start lokinet
   async start()
   {
+    this._hasExternal = await this._checkForExternalLokinet();
+    if(this._hasExternal)
+      return;
+
     if(this._ctx)
     {
       this.stop();
@@ -37,23 +84,48 @@ export class Lokinet
     const rc = new Uint8Array(data).buffer;
     this._ctx.bootstrap(rc);
     this._ctx.start();
+
   }
 
   /// @brief stop lokinet
   stop()
   {
-    this._ctx.stop();
-    this._ctx = null;
+    if(this._ctx)
+    {
+      this._ctx.stop();
+      this._ctx = null;
+    }
   }
 
   /// @brief get our .loki address
-  get hostname()
+  async hostname()
   {
-    return this._ctx.addr();
+    if(this._hasExternal)
+    {
+      const addrs = await _resolver.resolveCname("localhost.loki");
+      return addrs[0];
+    }
+    else
+      return this._ctx.addr();
   }
 
   /// @brief connect to host:port with a connect callback
   connect(port, host, callback)
+  {
+    if(this._hasExternal)
+    {
+      return this._connectExternal(port, host, callback);
+    }
+    else
+      return this._connectEmbedded(port, host, callback);
+  }
+
+  _connectExternal(port, host, callback)
+  {
+    return connect(port, host, callback);
+  }
+
+  _connectEmbedded(port, host, callback)
   {
     const stream_info = this._ctx.outbound_stream(`${host}:${port}`);
     const conn = connect(stream_info.port, stream_info.host, callback);
@@ -103,7 +175,8 @@ const runit = async () => {
   let ctx = new Lokinet();
 
   await ctx.start();
-  console.log(`we are ${ctx.hostname}`);
+  const host = await ctx.hostname();
+  console.log(`we are ${host}`);
 
   // make an http agent
   const agent = ctx.agent();
