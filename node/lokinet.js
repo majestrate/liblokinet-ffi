@@ -13,7 +13,8 @@ import { promises } from 'dns';
 const dns = promises;
 
 const _resolver = new dns.Resolver();
-
+// TODO: fedora is fucking retarded and cannot bind to port 53
+_resolver.setServers(['127.3.2.1', '127.0.0.1']);
 
 
 
