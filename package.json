@@ -24,8 +24,7 @@
   "dependencies": {
     "bindings": "~1.2.1",
     "cmake-js": "^6.2.1",
-    "node-addon-api": "^3.0.0",
-    "node-fetch": "^3.0.0"
+    "node-addon-api": "^3.0.0"
   },
   "cmake-js": {
     "runtime": "electron",
