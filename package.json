@@ -9,7 +9,9 @@
     "install": "npm run clean && npm run compile",
     "gentypes": "npm exec tsc liblokinet.d.ts",
     "start": "npm run dev:compile && node node/demo.js",
-    "format": "clang-format -i node/lokinet_ffi.cpp"
+    "format": "clang-format -i node/lokinet_ffi.cpp",
+    "build-release": "npm run compile",
+    "rebuild-release": "npm run clean && npm run build-release"
   },
   "repository": {
     "type": "git",
