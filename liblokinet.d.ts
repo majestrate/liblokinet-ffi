@@ -8,7 +8,8 @@ export class Lokinet
     stop(): void;
     hostname(): Promise<string>;
     connect(port: Number, host: string, callback: any): any;
-    agent(options: any): any;
+    httpAgent(options: any): any;
+    httpsAgent(options: any): any;
 }
 
 export function hex_to_base32z(hex: string): string;

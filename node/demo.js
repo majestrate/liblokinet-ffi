@@ -1,6 +1,10 @@
-import { Lokinet } from './lokinet.js';
+/*
+import { Lokinet } from './liblokinet.js';
 import fetch from 'node-fetch';
 import { get } from 'http';
+*/
+const Lokinet = require('./liblokinet.js').Lokinet;
+const get = require('http').get;
 
 const runit = async (opts) => {
   let ctx = new Lokinet(opts);
@@ -10,7 +14,7 @@ const runit = async (opts) => {
   console.log(`we are ${host}`);
 
   // make an http agent
-  const agent = ctx.agent();
+  const agent = ctx.httpAgent();
 
   // do a get request
   const req = get({
@@ -30,5 +34,5 @@ const runit = async (opts) => {
   req.end();
 };
 
-await runit();
-await runit({alwaysEmbed: true});
+runit();
+runit({alwaysEmbed: true});

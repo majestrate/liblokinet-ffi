@@ -11,7 +11,6 @@
     "start": "npm run dev:compile && node node/demo.js",
     "format": "clang-format -i node/lokinet_ffi.cpp"
   },
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/majestrate/liblokinet-ffi.git"

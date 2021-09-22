@@ -1,5 +1,6 @@
 /** lokinet.js -- glue jizz for liblokinet native shit */
 
+/*
 import bindings from 'bindings';
 import { readFile } from 'fs/promises';
 import { connect } from 'net';
@@ -7,10 +8,16 @@ import { Agent } from 'https';
 
 const lokinet = bindings('liblokinet_js');
 
-
 import { promises } from 'dns';
-
 const dns = promises;
+*/
+
+const lokinet = require('bindings')('liblokinet_js');
+const readFile = require('fs').promises.readFile;
+const connect = require('net').connect;
+const Agent = require('http').Agent;
+const SecureAgent = require('https').Agent;
+const dns = require('dns').promises;
 
 const _resolver = new dns.Resolver();
 // TODO: fedora is fucking retarded and cannot bind to port 53
@@ -18,10 +25,10 @@ _resolver.setServers(['127.3.2.1', '127.0.0.1']);
 
 
 /// @brief turn hex to base32z
-export const hex_to_base32z = lokinet.hex_to_base32z;
+const hex_to_base32z = lokinet.hex_to_base32z;
 
 //// @brief a lokinet wrapper that will spawn a liblokinet if an external lokinet is not detected
-export class Lokinet
+class Lokinet
 {
 
   /// @brief construct a lokinet context, if a lokinet is detected externally it will use it
@@ -148,9 +155,14 @@ export class Lokinet
   }
 
   /// @brief make an http.Agent that uses lokinet
-  agent(options)
+  httpAgent(options)
   {
     return new _Agent(this, options);
+  }
+
+  httpsAgent(options)
+  {
+    return new _SecureAgent(this, options);
   }
 
 };
@@ -173,4 +185,29 @@ class _Agent extends Agent
     });
     return conn;
   }
+};
+
+class _SecureAgent extends SecureAgent
+{
+  constructor(lokinet, options)
+  {
+    super(options);
+    this._ctx = lokinet;
+  }
+
+  createConnection(options, callback)
+  {
+    const conn = this._ctx.connect(options.port || 80, options.host, () => {
+      if(callback)
+      {
+        callback(null, conn);
+      }
+    });
+    return conn;
+  }
+}
+
+module.exports = {
+  "Lokinet": Lokinet,
+  "hex_to_base32z": hex_to_base32z
 };
