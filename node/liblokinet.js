@@ -87,7 +87,7 @@ class Lokinet
 
     if(this._ctx)
     {
-      this.stop();
+      return;
     }
     this._ctx = new lokinet.Context();
 
