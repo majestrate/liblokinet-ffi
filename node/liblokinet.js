@@ -15,6 +15,7 @@ const dns = promises;
 const lokinet = require('bindings')('liblokinet_js');
 const readFile = require('fs').promises.readFile;
 const connect = require('net').connect;
+const TLSSocket = require('tls').TLSSocket;
 const Agent = require('http').Agent;
 const SecureAgent = require('https').Agent;
 const dns = require('dns').promises;
@@ -39,6 +40,7 @@ class Lokinet
     this._opts = opts || {};
     this._ctx = null;
     this._hasExternal = false;
+    this._checkedExternal = false;
   }
 
   /// @brief get the local lokinet ip
@@ -78,8 +80,13 @@ class Lokinet
     {
       // skip embedded check if we are configured to always run as embedded
     }
+    else if(this._checkedExternal)
+    {
+      return;
+    }
     else
     {
+      this._checkedExternal = true;
       this._hasExternal = await this._checkForExternalLokinet();
       if(this._hasExternal)
         return;
@@ -140,6 +147,7 @@ class Lokinet
   _connectEmbedded(port, host, callback)
   {
     const stream_info = this._ctx.outbound_stream(`${host}:${port}`);
+    console.log(`embedded via ${stream_info.host}:${stream_info.port}`);
     const conn = connect(stream_info.port, stream_info.host, callback);
     conn.on("error", (err) => {
       console.log(err);
@@ -197,12 +205,9 @@ class _SecureAgent extends SecureAgent
 
   createConnection(options, callback)
   {
-    const conn = this._ctx.connect(options.port || 80, options.host, () => {
-      if(callback)
-      {
-        callback(null, conn);
-      }
-    });
+    const conn = new TLSSocket(this._ctx.connect(options.port || 443, options.host, () => {
+      if(callback) callback(null, conn);
+    }));
     return conn;
   }
 }
