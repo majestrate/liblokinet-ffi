@@ -456,8 +456,8 @@ namespace lokinet
   struct LoggerContext
   {
     Napi::Function logFunc;
-    Npai::Env env;
-    Napi::Function resource;
+    Napi::Env env;
+    Napi::Object resource;
 
     static void
     Log(const char* msg, void* ctx)
@@ -496,7 +496,7 @@ static Napi::Object
 Init(Napi::Env env, Napi::Object exports)
 {
   exports.Set(Napi::String::New(env, "Context"), lokinet::Context::Init(env, exports));
-  exports.Set(Napi::String::New(env, "set_logger"), Nap::Function::New<lokient::SetLogger>(env));
+  exports.Set(Napi::String::New(env, "set_logger"), Napi::Function::New<lokinet::SetLogger>(env));
   exports.Set(
       Napi::String::New(env, "hex_to_base32z"), Napi::Function::New<lokinet::HexToBase32z>(env));
   return exports;
