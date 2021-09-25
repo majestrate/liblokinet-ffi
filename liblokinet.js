@@ -238,9 +238,9 @@ class Lokinet
   {
     if(socket_id)
     {
+      const localip =  await this.localip();
       return new Promise((resolve, reject) => {
         let obj = {};
-        const localip =  await this.localip();
         try
         {
           const infos = this._make_udp_socket( () => { return obj.flow; }, port, localip);
