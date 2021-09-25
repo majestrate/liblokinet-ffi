@@ -153,6 +153,17 @@ namespace lokinet
       Napi::Function timeout;
       Napi::Object resource;
       lokinet_udp_flowinfo info;
+
+      explicit UDPFlow(const Napi::Env& _env) : env{_env}
+      {}
+      explicit UDPFlow(
+          const Napi::Env& _env,
+          Napi::Function _recv,
+          Napi::Function _timeout,
+          Napi::Object _res,
+          const lokinet_udp_flowinfo& _info)
+          : env{_env}, recv{_recv}, timeout{_timeout}, resource{_res}, info{_info}
+      {}
     };
 
     struct UDPSocket
@@ -169,7 +180,7 @@ namespace lokinet
 
       Napi::Object args = Napi::Object::New(self->env);
 
-      auto flow = Napi::External<UDPFlow>(self->env, new UDPFlow{});
+      auto flow = Napi::External<UDPFlow>::New(self->env, new UDPFlow{self->env});
       args.Set(
           Napi::String::New(self->env, "host"),
           Napi::String::New(self->env, std::string{info->remote_host}));
