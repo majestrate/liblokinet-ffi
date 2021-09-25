@@ -207,7 +207,7 @@ class Lokinet
   async udpIntercept(port)
   {
     if(this._hasExternal)
-      return new Promise((resolve, reject) => { resolve(null); }):
+      return new Promise((resolve, reject) => { resolve(null); });
     const ip = await this.localip();
     const udp = dgram.createSocket('udp4');
     let bindsock = (sock, resolve, reject) => {
