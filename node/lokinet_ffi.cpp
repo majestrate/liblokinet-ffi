@@ -169,12 +169,14 @@ namespace lokinet
 
       Napi::Object args = Napi::Object::New(self->env);
 
+      auto flow = Napi::External<UDPFlow>(self->env, new UDPFlow{});
       args.Set(
           Napi::String::New(self->env, "host"),
           Napi::String::New(self->env, std::string{info->remote_host}));
       args.Set(
           Napi::String::New(self->env, "port"), Napi::Number::New(self->env, info->remote_port));
       args.Set(Napi::String::New(self->env, "id"), Napi::Number::New(self->env, info->socket_id));
+      args.Set(Napi::String::New(self->env, "flow"), flow);
 
       Napi::AsyncContext context{self->env, "UDPFilter", self->resource};
 
@@ -192,14 +194,13 @@ namespace lokinet
       {
         return EINVAL;
       }
-
-      UDPFlow* flow = new UDPFlow{
-          self->env,
-          vals.Get(uint32_t{0}).As<Napi::Function>(),
-          vals.Get(uint32_t{1}).As<Napi::Function>(),
-          args,
-          *info};
-      *conn_user = flow;
+      auto* _flow = flow.Data();
+      _flow->env = self->env;
+      _flow->recv = vals.Get(uint32_t{0}).As<Napi::Function>();
+      _flow->timeout = vals.Get(uint32_t{1}).As<Napi::Function>();
+      _flow->resource = args;
+      _flow->info = *info;
+      *conn_user = _flow;
       *timeout = Context::DefaultUDPTimeout;
       return 0;
     }

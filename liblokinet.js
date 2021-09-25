@@ -19,6 +19,7 @@ const TLSSocket = require('tls').TLSSocket;
 const Agent = require('http').Agent;
 const SecureAgent = require('https').Agent;
 const dns = require('dns').promises;
+const dgram = require('dgram');
 
 const _resolver = new dns.Resolver();
 // TODO: fedora is fucking retarded and cannot bind to port 53
@@ -42,6 +43,7 @@ class Lokinet
     this._ctx = null;
     this._hasExternal = false;
     this._checkedExternal = false;
+    this._log = this._opts.log;
   }
 
   /// @brief get the local lokinet ip
@@ -98,8 +100,8 @@ class Lokinet
       return;
     }
 
-    if(this._opts.log)
-      lokinet.set_logger(this._opts.log);
+    if(this._log)
+      lokinet.set_logger(this._log);
 
     this._ctx = new lokinet.Context();
 
@@ -177,6 +179,92 @@ class Lokinet
   httpsAgent(options)
   {
     return new _SecureAgent(this, options);
+  }
+
+  _make_udp_socket(getflow, port, localip)
+  {
+    const c_socket = dgram.createSocket('udp4');
+    const recv = (pkt_info) => {
+      c_socket.sendto(Buffer.from(pkt_info.data), port, localip);
+    };
+    const timeout = (info) => {
+      this._log(`udp stream timed out: ${info.host}:${info.port}`);
+      c_socket.close();
+    };
+    c_socket.on('message', (msg, rinfo) => {
+      this._ctx.udp_flow_send(getflow(), msg);
+    });
+    c_socket.bind(0, localip);
+    c_socket.on('error', () => {
+      c_socket.close();
+    });
+    return [c_socket, recv, timeout];
+  }
+
+  /// @brief bind udp socket on our .loki address on port
+  async udpBind(port)
+  {
+    const ip = await this.localip();
+    const udp = dgram.createSocket('udp4');
+    let bindsock = (sock, resolve, reject) => {
+      if(this._hasExternal)
+      {
+        sock.on('error', (err) => {
+          reject(err);
+        });
+      }
+      sock.bind(port, ip, () => {
+        if(!this._hasExternal)
+        {
+          const socket_id = this._ctx.udp_bind(port, (info) => {
+            return this._make_udp_scoket(() => { return info.flow; }, port, ip).slice(1);
+          });
+          sock.on('close', () => {
+            this._ctx.udp_close(socket_id);
+          });
+        }
+        if(socket_id == 0)
+        {
+          reject("could not bind");
+          return;
+        }
+        udp._lokinet_socket_id = socket_id;
+        resolve(udp);
+      });
+    };
+    return new Promise((resolve, reject) => {
+      bindsock(udp, resolve, reject);
+    });
+  }
+
+  /// @brief given a udp hostname and port turn it into an [ip, port]
+  async resolveUDP(sock, host, port)
+  {
+    if(sock._lokinet_socket_id)
+    {
+      return new Promise((resolve, reject) => {
+        let obj = {};
+        const localip =  await this.localip();
+        try
+        {
+          const infos = this._make_udp_socket( () => { return obj.flow; }, port, localip);
+          obj.flow = this._ctx.udp_establish(sock._lokinet_socket_id, host, port, infos[1], infos[2]);
+          if(obj.flow)
+            resolve([localip, infos[0].address().port]);
+          else
+            throw 'fug';
+        }
+        catch(ex)
+        {
+          reject(ex)
+        }
+      });
+    }
+    else
+    {
+      const addrs = await _resolver.resolve(host);
+      return [addrs[0], port];
+    }
   }
 
 };
