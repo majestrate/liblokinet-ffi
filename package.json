@@ -22,7 +22,7 @@
   "bugs": {
     "url": "https://github.com/majestrate/liblokinet-ffi/issues"
   },
-  "module": "node/liblokinet.js",
+  "module": "liblokinet.js",
   "types": "liblokinet.d.ts",
   "homepage": "https://github.com/majestrate/liblokinet-ffi#readme",
   "dependencies": {
