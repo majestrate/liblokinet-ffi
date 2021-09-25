@@ -16,6 +16,8 @@ namespace lokinet
       }
     };
 
+    static constexpr int DefaultUDPTimeout = 30;  // in seconds
+
     std::unique_ptr<lokinet_context, context_deleter> m_Context;
 
     Napi::Value
@@ -198,7 +200,7 @@ namespace lokinet
           args,
           *info};
       *conn_user = flow;
-      *timeout = 30;
+      *timeout = Context::DefaultUDPTimeout;
       return 0;
     }
 
@@ -276,6 +278,12 @@ namespace lokinet
       }
       return Napi::Number::New(env, result.socket_id);
     }
+    static void
+    NewOutboundUDPFlow(void* user, void** flowuser, int* timeout)
+    {
+      UDPFlow* flow = static_cast<UDPFlow*>(user);
+      *timeout = Context::DefaultUDPTimeout;
+    }
 
     Napi::Value
     UDPEstablish(const Napi::CallbackInfo& info)
@@ -323,20 +331,20 @@ namespace lokinet
 
       remote.remote_port = info[2].As<Napi::Number>();
 
-      if (auto err = lokinet_udp_establish(&remote, *this))
-      {
-        Napi::Error::New(env, strerror(err)).ThrowAsJavaScriptException();
-        return env.Undefined();
-      }
-
-      return Napi::External<UDPFlow>::New(
-          env,
-          new UDPFlow{
+      UDPFlow * flow = new UDPFlow{
               env,
               info[3].As<Napi::Function>(),
               info[4].As<Napi::Function>(),
               Napi::Object::New(env),
               remote});
+      if (auto err = lokinet_udp_establish(&Context::NewOutboundUDPFlow, flow, &remote, *this))
+      {
+        delete flow;
+        Napi::Error::New(env, strerror(err)).ThrowAsJavaScriptException();
+        return env.Undefined();
+      }
+
+      return Napi::External<UDPFlow>::New(env, flow);
     }
 
     Napi::Value
