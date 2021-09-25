@@ -1,5 +1,5 @@
 node_modules/
 build/
 .cache/
-package-lock.json
 .ccls-cache/
+package-lock.json

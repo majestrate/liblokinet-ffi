@@ -205,9 +205,11 @@ namespace lokinet
     }
 
     static void
-    UDPRecv(const lokinet_udp_flowinfo* remote, char* data, size_t len, void* user)
+    UDPRecv(const lokinet_udp_flowinfo* remote, const char* data, size_t len, void* user)
     {
       UDPFlow* flow = static_cast<UDPFlow*>(user);
+
+      std::string data_buf{data, len};
 
       Napi::Object args = Napi::Object::New(flow->env);
 
@@ -219,7 +221,7 @@ namespace lokinet
       args.Set(
           Napi::String::New(flow->env, "port"), Napi::Number::New(flow->env, remote->remote_port));
       args.Set(Napi::String::New(flow->env, "id"), Napi::Number::New(flow->env, remote->socket_id));
-      args.Set(Napi::String::New(flow->env, "data"), Napi::ArrayBuffer::New(flow->env, data, len));
+      args.Set(Napi::String::New(flow->env, "data"), Napi::String::New(flow->env, data_buf));
 
       Napi::AsyncContext context{flow->env, "UDPRecv", flow->resource};
       flow->recv.MakeCallback(Napi::Object::New(flow->env), {args}, context);
@@ -329,14 +331,14 @@ namespace lokinet
       std::copy_n(
           host.data(), std::min(sizeof(remote.remote_host), host.size()), remote.remote_host);
 
-      remote.remote_port = info[2].As<Napi::Number>();
+      remote.remote_port = static_cast<uint32_t>(info[2].As<Napi::Number>());
 
-      UDPFlow * flow = new UDPFlow{
-              env,
-              info[3].As<Napi::Function>(),
-              info[4].As<Napi::Function>(),
-              Napi::Object::New(env),
-              remote});
+      UDPFlow* flow = new UDPFlow{
+          env,
+          info[3].As<Napi::Function>(),
+          info[4].As<Napi::Function>(),
+          Napi::Object::New(env),
+          remote};
       if (auto err = lokinet_udp_establish(&Context::NewOutboundUDPFlow, flow, &remote, *this))
       {
         delete flow;
