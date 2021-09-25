@@ -35,6 +35,7 @@ class Lokinet
   /// @brief construct a lokinet context, if a lokinet is detected externally it will use it
   /// @params opts can be null or a dict with the keys `bootstrap` which points to the bootstrap.signed file
   /// @params opts if opts contains alwaysEmbed and is set to true we will always use liblokinet embeded mode
+  /// @params opts if opts has a function called log it will use that as the lokinet logging function
   constructor(opts)
   {
     this._opts = opts || {};
@@ -96,7 +97,12 @@ class Lokinet
     {
       return;
     }
+
+    if(this._opts.log)
+      lokinet.set_logger(this._opts.log);
+
     this._ctx = new lokinet.Context();
+
 
     const bootstrap = this._opts.bootstrap || "bootstrap.signed";
     const data = await readFile(bootstrap);

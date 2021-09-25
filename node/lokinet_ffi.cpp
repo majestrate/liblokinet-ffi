@@ -453,12 +453,50 @@ namespace lokinet
     return Napi::String::New(env, lokinet_hex_to_base32z(hex.c_str()));
   }
 
+  struct LoggerContext
+  {
+    Napi::Function logFunc;
+    Npai::Env env;
+    Napi::Function resource;
+
+    static void
+    Log(const char* msg, void* ctx)
+    {
+      LoggerContext* self = static_cast<LoggerContext*>(ctx);
+
+      Napi::AsyncContext context{self->env, "LokinetLogger", self->resource};
+
+      self->logFunc.MakeCallback(
+          Napi::Object::New(self->env), {Napi::String::New(self->env, std::string{msg})}, context);
+    }
+  };
+
+  Napi::Value
+  SetLogger(const Napi::CallbackInfo& info)
+  {
+    auto env = info.Env();
+    if (info.Length() != 1)
+    {
+      Napi::Error::New(env, "Expected exactly 1 argument").ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
+    if (not info[0].IsFunction())
+    {
+      Napi::Error::New(env, "Argument not a function").ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
+    lokinet_set_logger(
+        &LoggerContext::Log,
+        new LoggerContext{info[0].As<Napi::Function>(), env, Napi::Object::New(env)});
+    return env.Undefined();
+  }
 }  // namespace lokinet
 
 static Napi::Object
 Init(Napi::Env env, Napi::Object exports)
 {
   exports.Set(Napi::String::New(env, "Context"), lokinet::Context::Init(env, exports));
+  exports.Set(Napi::String::New(env, "set_logger"), Nap::Function::New<lokient::SetLogger>(env));
   exports.Set(
       Napi::String::New(env, "hex_to_base32z"), Napi::Function::New<lokinet::HexToBase32z>(env));
   return exports;
