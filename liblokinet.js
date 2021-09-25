@@ -43,13 +43,20 @@ class Lokinet
     this._ctx = null;
     this._hasExternal = false;
     this._checkedExternal = false;
-    this._log = this._opts.log;
+  }
+
+  _log(msg)
+  {
+    if(this._opts.log)
+      this._opts.log(`[liblokinet] ${msg}`);
+    else
+      console.log(msg);
   }
 
   /// @brief get the local lokinet ip
   async localip()
   {
-
+    this._log("localip");
     let addrs = [];
     try
     {
@@ -67,6 +74,7 @@ class Lokinet
 
   async _checkForExternalLokinet()
   {
+    this._log("checkForExternalLokinet");
     let addrs  = [];
     try
     {
@@ -79,6 +87,7 @@ class Lokinet
   /// @brief start lokinet
   async start()
   {
+    this._log("start");
     if(this._opts.alwaysEmbed)
     {
       // skip embedded check if we are configured to always run as embedded
@@ -100,8 +109,8 @@ class Lokinet
       return;
     }
 
-    if(this._log)
-      lokinet.set_logger(this._log);
+
+    lokinet.set_logger(this._log);
 
     this._ctx = new lokinet.Context();
 
@@ -117,6 +126,7 @@ class Lokinet
   /// @brief stop lokinet
   stop()
   {
+    this._log("start");
     if(this._ctx)
     {
       this._ctx.stop();
@@ -127,6 +137,7 @@ class Lokinet
   /// @brief get our .loki address
   async hostname()
   {
+    this._log("hostname");
     if(this._hasExternal)
     {
       const addrs = await _resolver.resolveCname("localhost.loki");
@@ -139,6 +150,7 @@ class Lokinet
   /// @brief connect to host:port with a connect callback
   connect(port, host, callback)
   {
+    this._log("connect");
     if(this._hasExternal)
     {
       return this._connectExternal(port, host, callback);
@@ -173,16 +185,19 @@ class Lokinet
   /// @brief make an http.Agent that uses lokinet
   httpAgent(options)
   {
+    this._log("httpAgent");
     return new _Agent(this, options);
   }
 
   httpsAgent(options)
   {
+    this._log("httpsAgent");
     return new _SecureAgent(this, options);
   }
 
   _make_udp_socket(getflow, port, localip)
   {
+    this._log("_make_udp_socket");
     const c_socket = dgram.createSocket('udp4');
     const recv = (pkt_info) => {
       c_socket.sendto(Buffer.from(pkt_info.data), port, localip);
@@ -206,6 +221,7 @@ class Lokinet
   /// @return a udp socket id for use
   async udpIntercept(port)
   {
+    this._log("udpIntercept");
     if(this._hasExternal)
       return new Promise((resolve, reject) => { resolve(null); });
     const ip = await this.localip();
@@ -236,6 +252,7 @@ class Lokinet
   /// @brief given a udp hostname and port turn it into an [ip, port]
   async resolveUDP(socket_id, host, port)
   {
+    this._log("resolveUDP");
     if(socket_id)
     {
       const localip =  await this.localip();
@@ -267,6 +284,7 @@ class Lokinet
   /// @return a function to unmap the stream
   async permitInboundTCP(port)
   {
+    this._log("permitInboundTCP");
     return new Promise((resolve, reject) => {
       var id;
       if(!this._hasExternal)
@@ -320,7 +338,6 @@ class _SecureAgent extends SecureAgent
 }
 
 module.exports = {
-  "GetLokinet": (opts) => { return new Lokinet(opts); },
   "Lokinet": Lokinet,
   "hex_to_base32z": hex_to_base32z
 };
