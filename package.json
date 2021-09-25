@@ -11,7 +11,8 @@
     "start": "npm run dev:compile && node demo.js",
     "format": "clang-format -i node/lokinet_ffi.cpp",
     "build-release": "npm run compile",
-    "rebuild-release": "npm run clean && npm run build-release"
+    "rebuild-release": "npm run clean && npm run build-release",
+    "install": "npm run clean && npm run compile"
   },
   "repository": {
     "type": "git",
