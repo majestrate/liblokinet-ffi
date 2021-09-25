@@ -320,6 +320,7 @@ class _SecureAgent extends SecureAgent
 }
 
 module.exports = {
+  "GetLokinet": (opts) => { return new Lokinet(opts); },
   "Lokinet": Lokinet,
   "hex_to_base32z": hex_to_base32z
 };
