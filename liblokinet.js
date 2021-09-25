@@ -202,45 +202,41 @@ class Lokinet
   }
 
   /// @brief bind udp socket on our .loki address on port
-  async udpBind(port)
+  /// does nothing for external lokinet
+  /// @return a udp socket id for use
+  async udpIntercept(port)
   {
+    if(this._hasExternal)
+      return new Promise((resolve, reject) => { resolve(null); }):
     const ip = await this.localip();
     const udp = dgram.createSocket('udp4');
     let bindsock = (sock, resolve, reject) => {
-      if(this._hasExternal)
-      {
-        sock.on('error', (err) => {
-          reject(err);
+      sock.bind(0, ip, () => {
+
+        const socket_id = this._ctx.udp_bind(port, (info) => {
+          return this._make_udp_scoket(() => { return info.flow; }, port, ip).slice(1);
         });
-      }
-      sock.bind(port, ip, () => {
-        if(!this._hasExternal)
-        {
-          const socket_id = this._ctx.udp_bind(port, (info) => {
-            return this._make_udp_scoket(() => { return info.flow; }, port, ip).slice(1);
-          });
-          sock.on('close', () => {
-            this._ctx.udp_close(socket_id);
-          });
-        }
+        sock.on('close', () => {
+          this._ctx.udp_close(socket_id);
+        });
+
         if(socket_id == 0)
         {
           reject("could not bind");
           return;
         }
-        udp._lokinet_socket_id = socket_id;
-        resolve(udp);
+        resolve(socket_id);
       });
     };
     return new Promise((resolve, reject) => {
-      bindsock(udp, resolve, reject);
+        bindsock(udp, resolve, reject);
     });
   }
 
   /// @brief given a udp hostname and port turn it into an [ip, port]
-  async resolveUDP(sock, host, port)
+  async resolveUDP(socket_id, host, port)
   {
-    if(sock._lokinet_socket_id)
+    if(socket_id)
     {
       return new Promise((resolve, reject) => {
         let obj = {};
@@ -248,7 +244,7 @@ class Lokinet
         try
         {
           const infos = this._make_udp_socket( () => { return obj.flow; }, port, localip);
-          obj.flow = this._ctx.udp_establish(sock._lokinet_socket_id, host, port, infos[1], infos[2]);
+          obj.flow = this._ctx.udp_establish(socket_id, host, port, infos[1], infos[2]);
           if(obj.flow)
             resolve([localip, infos[0].address().port]);
           else
@@ -265,6 +261,23 @@ class Lokinet
       const addrs = await _resolver.resolve(host);
       return [addrs[0], port];
     }
+  }
+
+  /// @brief permit inbound tcp stream on port
+  /// @return a function to unmap the stream
+  async permitInboundTCP(port)
+  {
+    return new Promise((resolve, reject) => {
+      var id;
+      if(!this._hasExternal)
+      {
+        id = this._ctx.inbound_stream(port);
+      }
+      resolve(() => {
+        if(id)
+          this._ctx.close_stream(id);
+      });
+    });
   }
 
 };
