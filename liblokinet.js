@@ -57,7 +57,6 @@ class Lokinet
   async localip()
   {
     this._log("localip");
-    let addrs = [];
     if(this._opts.alwaysEmbed)
     {
       return "127.0.0.1";
