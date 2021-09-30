@@ -225,7 +225,7 @@ class Lokinet
   /// @brief bind udp socket on our .loki address on port
   /// does nothing for external lokinet
   /// @return a udp socket id for use
-  async udpIntercept(port)
+  async udpIntercept(port, toHost)
   {
     this._log("udpIntercept");
     if(this._hasExternal)
@@ -236,7 +236,7 @@ class Lokinet
       sock.bind(0, ip, () => {
 
         const socket_id = this._ctx.udp_bind(port, (info) => {
-          return this._make_udp_scoket(() => { return info.flow; }, port, ip).slice(1);
+          return this._make_udp_scoket(() => { return info.flow; }, port, toHost).slice(1);
         });
         sock.on('close', () => {
           this._ctx.udp_close(socket_id);
