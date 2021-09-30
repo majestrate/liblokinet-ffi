@@ -365,28 +365,54 @@ namespace lokinet
     UDPFlowSend(const Napi::CallbackInfo& info)
     {
       auto env = info.Env();
-      if (info.Length() != 2)
+      if (not(info.Length() == 2 or info.Length() == 4))
       {
-        Napi::Error::New(env, "Expected 2 arguments").ThrowAsJavaScriptException();
+        Napi::Error::New(env, "Expected 2 or 4 arguments").ThrowAsJavaScriptException();
+        return env.Undefined();
+      }
+      if (not info[0].IsArrayBuffer())
+      {
+        Napi::Error::New(env, "Expected an arraybuffer as first arg").ThrowAsJavaScriptException();
         return env.Undefined();
       }
 
-      if (not info[0].IsExternal())
+      Napi::ArrayBuffer data = info[0].As<Napi::ArrayBuffer>();
+
+      const bool useflow = info.Length() == 2;
+      lokinet_udp_flowinfo flowinfo{};
+      if (useflow)
       {
-        Napi::Error::New(env, "Expected a flow as first arg").ThrowAsJavaScriptException();
-        return env.Undefined();
+        if (not info[1].IsExternal())
+        {
+          Napi::Error::New(env, "Expected a flow as second arg").ThrowAsJavaScriptException();
+          return env.Undefined();
+        }
+
+        Napi::External<UDPFlow> flow = info[1].As<Napi::External<UDPFlow>>();
+        flowinfo = flow.Data()->info;
       }
-      if (not info[1].IsArrayBuffer())
+      else
       {
-        Napi::Error::New(env, "Expected an arraybuffer as second arg").ThrowAsJavaScriptException();
-        return env.Undefined();
+        if (not(info[1].IsNumber() and info[2].IsNumber() and info[3].IsString()))
+        {
+          Napi::Error::New(env, "bad arguments").ThrowAsJavaScriptException();
+          return env.Undefined();
+        }
+        flowinfo.socket_id = static_cast<int32_t>(info[1].As<Napi::Number>());
+        flowinfo.remote_port static_cast<int32_t>(info[2].As<Napi::Number>());
+        std::string remote{info[3].As<Napi::String>()};
+        if (remote.size() >= sizeof(flowinfo.remote_host))
+        {
+          Napi::Error::New(env, "bad remote host, too long").ThrowAsJavaScriptException();
+          return env.Undefined();
+        }
+        std::copy_n(
+            remote.data(),
+            std::min(remote.size(), sizeof(flowinfo.remote_host)),
+            flowinfo.remote_host);
       }
 
-      Napi::External<UDPFlow> flow = info[0].As<Napi::External<UDPFlow>>();
-      Napi::ArrayBuffer data = info[1].As<Napi::ArrayBuffer>();
-
-      if (auto err =
-              lokinet_udp_flow_send(&flow.Data()->info, data.Data(), data.ByteLength(), *this))
+      if (auto err = lokinet_udp_flow_send(&flowinfo, data.Data(), data.ByteLength(), *this))
       {
         Napi::Error::New(env, strerror(err)).ThrowAsJavaScriptException();
       }
