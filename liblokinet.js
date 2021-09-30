@@ -58,18 +58,25 @@ class Lokinet
   {
     this._log("localip");
     let addrs = [];
+    if(this._opts.alwaysEmbed)
+    {
+      return "127.0.0.1";
+    }
+    let addrs = [];
+
     try
     {
-        addrs = await _resolver.resolveCname("localhost.loki");
+      addrs = await _resolver.resolveCname("localhost.loki");
     }
     catch(e) {};
+
     if(addrs.length > 0)
     {
       const localaddrs = await _resolver.resolve(addrs[0]);
       return localaddrs[0];
     }
     else
-      return "127.0.0.1";
+      throw "cannot get local ip";
   }
 
   async _checkForExternalLokinet()
