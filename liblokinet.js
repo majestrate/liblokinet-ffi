@@ -110,7 +110,7 @@ class Lokinet
     }
 
 
-    lokinet.set_logger(this._log);
+    // lokinet.set_logger(this._log);
 
     this._ctx = new lokinet.Context();
 
