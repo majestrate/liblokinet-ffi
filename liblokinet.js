@@ -310,7 +310,7 @@ class Lokinet
       return [recv, timeout];
 
     };
-    return this._ctx.udp_bind(exposePort, port, on_new_flow);
+    return this._ctx.udp_bind(exposePort, on_new_flow);
   }
 
   /// @brief permit inbound tcp stream on port
