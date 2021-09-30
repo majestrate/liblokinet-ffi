@@ -293,7 +293,7 @@ class Lokinet
       const remoteport = info.port;
       const socket_id = info.id;
 
-      sock.bind(exposePort, ip);
+      sock.bind({port: exposePort, address: ip});
 
       const timeout = (info) => {
         this._log(`socket timeout: ${info.host}`);
