@@ -201,21 +201,21 @@ class Lokinet
     return new _SecureAgent(this, options);
   }
 
-  _make_udp_socket(getflow, port, localip)
+  _make_udp_socket(socket_id, remote_host, remote_port, local_ip, local_port)
   {
     this._log("_make_udp_socket");
     const c_socket = dgram.createSocket('udp4');
     const recv = (pkt_info) => {
-      c_socket.sendto(Buffer.from(pkt_info.data), port, localip);
+      c_socket.sendto(Buffer.from(pkt_info.data), local_port, local_ip);
     };
     const timeout = (info) => {
       this._log(`udp stream timed out: ${info.host}:${info.port}`);
       c_socket.close();
     };
     c_socket.on('message', (msg, rinfo) => {
-      this._ctx.udp_flow_send(getflow(), msg);
+      this._ctx.udp_flow_send(msg, socket_id, remote_port, remote_host);
     });
-    c_socket.bind(0, localip);
+    c_socket.bind(0, local_ip);
     c_socket.on('error', () => {
       c_socket.close();
     });
@@ -230,13 +230,13 @@ class Lokinet
     this._log("udpIntercept");
     if(this._hasExternal)
       return new Promise((resolve, reject) => { resolve(null); });
-    const ip = await this.localip();
+    const ip = toHost;
     const udp = dgram.createSocket('udp4');
     let bindsock = (sock, resolve, reject) => {
       sock.bind(0, ip, () => {
 
         const socket_id = this._ctx.udp_bind(port, (info) => {
-          return this._make_udp_scoket(() => { return info.flow; }, port, toHost).slice(1);
+          return this._make_udp_scoket(info.socket_id, info.host, info.port, ip, port).slice(1);
         });
         sock.on('close', () => {
           this._ctx.udp_close(socket_id);
@@ -266,12 +266,9 @@ class Lokinet
         let obj = {};
         try
         {
-          const infos = this._make_udp_socket( () => { return obj.flow; }, port, localip);
-          obj.flow = this._ctx.udp_establish(socket_id, host, port, infos[1], infos[2]);
-          if(obj.flow)
-            resolve([localip, infos[0].address().port]);
-          else
-            throw 'fug';
+          const infos = this._make_udp_socket(socket_id, host, port, localip, port);
+          resolve([localip, infos[0].address().port]);
+
         }
         catch(ex)
         {
@@ -284,6 +281,36 @@ class Lokinet
       const addrs = await _resolver.resolve(host);
       return [addrs[0], port];
     }
+  }
+
+  /// @brief expose udp ip:port on lokinet via exposePort
+  /// @return socket id
+  async permitInboundUDP(port, ip, exposePort)
+  {
+    const on_new_flow = (info) => {
+      const sock = dgram.createSocket('udp4');
+      const remotehost = info.host;
+      const remoteport = info.port;
+      const socket_id = info.id;
+
+      sock.bind(0, ip);
+
+      const timeout = (info) => {
+        sock.close();
+      };
+
+      sock.on("message", (msg, rinfo) => {
+        this._ctx.udp_flow_send(msg, socket_id, remotehost, remoteport);
+      });
+
+      const recv = (pkt_info) => {
+        sock.sendto(Buffer.from(pkt_info.data), port, ip);
+      };
+
+      return [recv, timeout];
+
+    };
+    return this._ctx.udp_bind(exposePort, port, on_new_flow);
   }
 
   /// @brief permit inbound tcp stream on port
