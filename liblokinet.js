@@ -293,18 +293,21 @@ class Lokinet
       const remoteport = info.port;
       const socket_id = info.id;
 
-      sock.bind(0, ip);
+      sock.bind(exposePort, ip);
 
       const timeout = (info) => {
+        this._log(`socket timeout: ${info.host}`);
         sock.close();
       };
 
       sock.on("message", (msg, rinfo) => {
+        this._log(`sock got msg: ${msg}`);
         this._ctx.udp_flow_send(msg, socket_id, remotehost, remoteport);
       });
 
       const recv = (pkt_info) => {
-        sock.sendto(Buffer.from(pkt_info.data), port, ip);
+        this._log(`sock send msg to ${ip}:${port}`);
+        sock.sendto(pkt_info.data, port, ip);
       };
 
       return [recv, timeout];

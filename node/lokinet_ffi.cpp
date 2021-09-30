@@ -233,7 +233,9 @@ namespace lokinet
       args.Set(
           Napi::String::New(flow->env, "port"), Napi::Number::New(flow->env, remote->remote_port));
       args.Set(Napi::String::New(flow->env, "id"), Napi::Number::New(flow->env, remote->socket_id));
-      args.Set(Napi::String::New(flow->env, "data"), Napi::String::New(flow->env, data_buf));
+      args.Set(
+          Napi::String::New(flow->env, "data"),
+          Napi::ArrayBuffer::New(flow->env, static_cast<void*>(data_buf.data()), len));
 
       Napi::AsyncContext context{flow->env, "UDPRecv", flow->resource};
       flow->recv.MakeCallback(Napi::Object::New(flow->env), {args}, context);
