@@ -399,7 +399,7 @@ namespace lokinet
           return env.Undefined();
         }
         flowinfo.socket_id = static_cast<int32_t>(info[1].As<Napi::Number>());
-        flowinfo.remote_port static_cast<int32_t>(info[2].As<Napi::Number>());
+        flowinfo.remote_port = static_cast<int32_t>(info[2].As<Napi::Number>());
         std::string remote{info[3].As<Napi::String>()};
         if (remote.size() >= sizeof(flowinfo.remote_host))
         {
