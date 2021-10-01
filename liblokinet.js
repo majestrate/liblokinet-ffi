@@ -283,17 +283,17 @@ class Lokinet
     }
   }
 
-  /// @brief expose udp ip:port on lokinet via exposePort
+  /// @brief expose udp ip:port on lokinet via exposePort on localport
   /// @return socket id
-  async permitInboundUDP(port, ip, exposePort)
+  permitUDP(port, ip, exposePort, localport)
   {
-    const on_new_flow = (info) => {
+    const _on_new_flow = (info) => {
       const sock = dgram.createSocket('udp4');
       const remotehost = info.host;
       const remoteport = info.port;
       const socket_id = info.id;
 
-      sock.bind({port: exposePort, address: ip});
+      sock.bind({port: localport, address: ip});
 
       const timeout = (info) => {
         this._log(`socket timeout: ${info.host}`);
@@ -313,7 +313,16 @@ class Lokinet
       return [recv, timeout];
 
     };
-    return this._ctx.udp_bind(exposePort, on_new_flow);
+    return this._ctx.udp_bind(exposePort, (info) => {
+      try
+      {
+       return _on_new_flow(info);
+      }
+      catch(ex)
+      {
+        this._log(`failed to handle new flow: ${ex}`);
+      }
+    });
   }
 
   /// @brief permit inbound tcp stream on port
