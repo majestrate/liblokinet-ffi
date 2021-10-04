@@ -343,6 +343,15 @@ class Lokinet
     });
   }
 
+  /// @brief returns true if an ip address is accessable via lokinet interface
+  async ownsAddress(ip)
+  {
+    if(this._hasExternal)
+      return ip === await this.localip();
+    else
+      return ip.startsWith("192.168.")|| ip.startsWith("10.");
+  }
+
 };
 
 class _Agent extends Agent
