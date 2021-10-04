@@ -1,3 +1,6 @@
 [submodule "external/lokinet"]
 	path = external/lokinet
 	url = https://github.com/oxen-io/lokinet
+[submodule "external/node-api-stub"]
+	path = external/node-api-stub
+	url = https://github.com/napi-bindings/node-api-stub
