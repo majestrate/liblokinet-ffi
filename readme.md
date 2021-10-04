@@ -29,4 +29,4 @@ run the nodejs demo:
 
 making a dev build:
 
-    $ CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) npm run dev:compile
+    $ CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) npm run compile:dev
