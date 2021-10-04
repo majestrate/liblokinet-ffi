@@ -8,6 +8,7 @@ project (liblokinet_js)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/lokinet)
 
 include_directories(${CMAKE_JS_INC})
+include_directories(${CMAKE_BINARY_DIR}/static-deps/include)
 add_library(${PROJECT_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/node/lokinet_ffi.cpp ${CMAKE_CURRENT_SOURCE_DIR}/external/lokinet/llarp/lokinet_shared.cpp ${CMAKE_JS_SRC})
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB} liblokinet)
