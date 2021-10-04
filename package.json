@@ -4,15 +4,17 @@
   "description": "liblokinet ffi wrapper",
   "scripts": {
     "clean": "cmake-js clean",
-    "dev:compile": "cmake-js build -m -g --debug --CDSTATIC_LINK=ON --CDBUILD_SHARED_LIBS=OFF --CDBUILD_LIBLOKINET=OFF --CDWITH_SYSTEMD=OFF --CDWITH_LTO=OFF --CDNATIVE_BUILD=OFF --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF --CDFORCE_OXENMQ_SUBMODULE=ON --CDWITH_BOOTSTRAP=OFF --CDBUILD_DAEMON=OFF",
-    "compile": "cmake-js build -m --CDSTATIC_LINK=ON --CDBUILD_SHARED_LIBS=OFF --CDBUILD_LIBLOKINET=OFF --CDWITH_SYSTEMD=OFF --CDWITH_LTO=ON --CDNATIVE_BUILD=OFF --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF --CDFORCE_OXENMQ_SUBMODULE=ON --CDWITH_BOOTSTRAP=OFF --CDBUILD_DAEMON=OFF",
-    "win32:compile" : "cmake-js build -m -g --CDSTATIC_LINK=ON --CDBUILD_SHARED_LIBS=OFF --CDBUILD_LIBLOKINET=OFF --CDWITH_SYSTEMD=OFF --CDWITH_LTO=OFF --CDNATIVE_BUILD=OFF --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF --CDBUILD_TESTING=OFF --CDFORCE_OXENMQ_SUBMODULE=ON --CDWITH_BOOTSTRAP=OFF --CDBUILD_DAEMON=OFF --CDCMAKE_TOOLCHAIN_FILE=external/lokinet/contrib/cross/mingw64.cmake --CDWITH_WEPOLL=ON",
+    "compile:dev": "cmake-js build -m -g --debug --CDSTATIC_LINK=ON --CDBUILD_SHARED_LIBS=OFF --CDBUILD_LIBLOKINET=OFF --CDWITH_SYSTEMD=OFF --CDWITH_LTO=OFF --CDNATIVE_BUILD=OFF --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF --CDFORCE_OXENMQ_SUBMODULE=ON --CDWITH_BOOTSTRAP=OFF --CDBUILD_DAEMON=OFF",
+    "compile:native": "cmake-js build -m --CDSTATIC_LINK=ON --CDBUILD_SHARED_LIBS=OFF --CDBUILD_LIBLOKINET=OFF --CDWITH_SYSTEMD=OFF --CDWITH_LTO=ON --CDNATIVE_BUILD=OFF --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF --CDFORCE_OXENMQ_SUBMODULE=ON --CDWITH_BOOTSTRAP=OFF --CDBUILD_DAEMON=OFF",
+    "compile:win32" : "cmake-js build -m -g --CDSTATIC_LINK=ON --CDBUILD_SHARED_LIBS=OFF --CDBUILD_LIBLOKINET=OFF --CDWITH_SYSTEMD=OFF --CDWITH_LTO=OFF --CDNATIVE_BUILD=OFF --CDBUILD_STATIC_DEPS=ON --CDWITH_TESTS=OFF --CDBUILD_TESTING=OFF --CDFORCE_OXENMQ_SUBMODULE=ON --CDWITH_BOOTSTRAP=OFF --CDBUILD_DAEMON=OFF --CDCMAKE_TOOLCHAIN_FILE=external/lokinet/contrib/cross/mingw64.cmake --CDWITH_WEPOLL=ON",
     "gentypes": "npm exec tsc liblokinet.d.ts",
-    "start": "npm run dev:compile && node demo.js",
+    "start": "npm run compile:dev && node demo.js",
     "format": "clang-format -i node/lokinet_ffi.cpp",
-    "build-release": "npm run compile",
+    "build-release": "npm run compile:native",
     "rebuild-release": "npm run clean && npm run build-release",
-    "install": "npm run compile"
+    "compile:": "npm run compile:native",
+    "compile": "npm run compile:native",
+    "install": "npm run compile:$BUILD_TARGET"
   },
   "repository": {
     "type": "git",
