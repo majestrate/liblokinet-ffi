@@ -16,8 +16,8 @@
     "build-release": "npm run compile:native",
     "rebuild-release": "npm run clean && npm run build-release",
     "compile:": "npm run compile:native",
-    "compile": "npm run compile:native",
-    "install": "npm run compile:$BUILD_TARGET"
+    "compile": "npm run compile:$BUILD_TARGET",
+    "install": "npm run compile"
   },
   "repository": {
     "type": "git",
