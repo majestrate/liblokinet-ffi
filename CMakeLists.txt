@@ -5,7 +5,9 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12 CACHE STRING "macOS deployment target (App
 
 project (liblokinet_js)
 
-
+if("${NODE_PLATFORM}" EQUAL "win32")
+  set(WIN32 ON)
+endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/node-api-stub)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/lokinet)

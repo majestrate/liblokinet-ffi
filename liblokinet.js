@@ -12,7 +12,15 @@ import { promises } from 'dns';
 const dns = promises;
 */
 
-const lokinet = require('bindings')('liblokinet_js');
+let lokinet = null;
+let hex_to_base32z = (str) => {};
+
+try {
+    lokinet = require('bindings')('liblokinet_js');
+} catch (ex) {
+    console.log(`cannot load native library: ${ex}`);
+};
+
 const readFile = require('fs').promises.readFile;
 const connect = require('net').connect;
 const TLSSocket = require('tls').TLSSocket;
@@ -26,372 +34,336 @@ const _resolver = new dns.Resolver();
 _resolver.setServers(['127.3.2.1', '127.0.0.1']);
 
 
-/// @brief turn hex to base32z
-const hex_to_base32z = lokinet.hex_to_base32z;
+if (lokinet) {
+    hex_to_base32z = lokinet.hex_to_base32z;
+}
 
 //// @brief a lokinet wrapper that will spawn a liblokinet if an external lokinet is not detected
-class Lokinet
-{
+class Lokinet {
 
-  /// @brief construct a lokinet context, if a lokinet is detected externally it will use it
-  /// @params opts can be null or a dict with the keys `bootstrap` which points to the bootstrap.signed file
-  /// @params opts if opts contains alwaysEmbed and is set to true we will always use liblokinet embeded mode
-  /// @params opts if opts has a function called log it will use that as the lokinet logging function
-  constructor(opts)
-  {
-    this._opts = opts || {};
-    this._ctx = null;
-    this._hasExternal = false;
-    this._checkedExternal = false;
-  }
-
-  _log(msg)
-  {
-    if(this._opts.log)
-      this._opts.log(`[liblokinet] ${msg}`);
-    else
-      console.log(msg);
-  }
-
-  /// @brief get the local lokinet ip
-  async localip()
-  {
-    this._log("localip");
-    if(this._opts.alwaysEmbed)
-    {
-      return "127.0.0.1";
-    }
-    let addrs = [];
-
-    try
-    {
-      addrs = await _resolver.resolveCname("localhost.loki");
-    }
-    catch(e) {};
-
-    if(addrs.length > 0)
-    {
-      const localaddrs = await _resolver.resolve(addrs[0]);
-      return localaddrs[0];
-    }
-    else
-      throw "cannot get local ip";
-  }
-
-  async _checkForExternalLokinet()
-  {
-    this._log("checkForExternalLokinet");
-    let addrs  = [];
-    try
-    {
-      addrs = await _resolver.resolveCname("localhost.loki");
-    }
-    catch(e) {};
-    return addrs.length > 0;
-  }
-
-  /// @brief start lokinet
-  async start()
-  {
-    this._log("start");
-    if(this._opts.alwaysEmbed)
-    {
-      // skip embedded check if we are configured to always run as embedded
-    }
-    else if(this._checkedExternal)
-    {
-      return;
-    }
-    else
-    {
-      this._checkedExternal = true;
-      this._hasExternal = await this._checkForExternalLokinet();
-      if(this._hasExternal)
-        return;
+    /// @brief construct a lokinet context, if a lokinet is detected externally it will use it
+    /// @params opts can be null or a dict with the keys `bootstrap` which points to the bootstrap.signed file
+    /// @params opts if opts contains alwaysEmbed and is set to true we will always use liblokinet embeded mode
+    /// @params opts if opts has a function called log it will use that as the lokinet logging function
+    constructor(opts) {
+        this._opts = opts || {};
+        this._ctx = null;
+        this._hasExternal = false;
+        this._checkedExternal = false;
     }
 
-    if(this._ctx)
-    {
-      return;
+    /// @brief returns true if we are using an external lokinet
+    hasExternal() {
+        return this._hasExternal;
     }
 
-
-    // lokinet.set_logger(this._log);
-
-    this._ctx = new lokinet.Context();
-
-
-    const bootstrap = this._opts.bootstrap || "bootstrap.signed";
-    const data = await readFile(bootstrap);
-    const rc = new Uint8Array(data).buffer;
-    this._ctx.bootstrap(rc);
-    this._ctx.start();
-
-  }
-
-  /// @brief stop lokinet
-  stop()
-  {
-    this._log("start");
-    if(this._ctx)
-    {
-      this._ctx.stop();
-      this._ctx = null;
+    _shouldEmbed() {
+        if (lokinet == null)
+            return false;
+        return this._opts.alwaysEmbed;
     }
-  }
 
-  /// @brief get our .loki address
-  async hostname()
-  {
-    this._log("hostname");
-    if(this._hasExternal)
-    {
-      const addrs = await _resolver.resolveCname("localhost.loki");
-      return addrs[0];
+    _log(msg) {
+        if (this._opts.log)
+            this._opts.log(`[liblokinet] ${msg}`);
+        else
+            console.log(msg);
     }
-    else
-      return this._ctx.addr();
-  }
 
-  /// @brief connect to host:port with a connect callback
-  connect(port, host, callback)
-  {
-    this._log("connect");
-    if(this._hasExternal)
-    {
-      return this._connectExternal(port, host, callback);
+    /// @brief get the local lokinet ip
+    async localip() {
+        this._log("localip");
+        if (this._shouldEmbed()) {
+            return "127.0.0.1";
+        }
+        let addrs = [];
+
+        try {
+            addrs = await _resolver.resolveCname("localhost.loki");
+        } catch (e) {};
+
+        if (addrs.length > 0) {
+            const localaddrs = await _resolver.resolve(addrs[0]);
+            return localaddrs[0];
+        } else
+            throw "cannot get local ip";
     }
-    else
-      return this._connectEmbedded(port, host, callback);
-  }
 
-  _connectExternal(port, host, callback)
-  {
-    return connect(port, host, callback);
-  }
+    async _checkForExternalLokinet() {
+        this._log("checkForExternalLokinet");
+        let addrs = [];
+        try {
+            addrs = await _resolver.resolveCname("localhost.loki");
+        } catch (e) {};
+        return addrs.length > 0;
+    }
 
-  _connectEmbedded(port, host, callback)
-  {
-    const stream_info = this._ctx.outbound_stream(`${host}:${port}`);
-    console.log(`embedded via ${stream_info.host}:${stream_info.port}`);
-    const conn = connect(stream_info.port, stream_info.host, callback);
-    conn.on("error", (err) => {
-      console.log(err);
-      conn.end();
-    });
-    conn.on('end', () => {
-      if(this._ctx)
-      {
-        this._ctx.close_stream(stream_info.id);
-      }
-    });
-    return conn;
-  }
+    /// @brief start lokinet
+    async start() {
+        this._log("start");
+        if (this._shouldEmbed()) {
+            // skip embedded check if we are configured to always run as embedded
+        } else if (this._checkedExternal) {
+            // if we already checked for an external address we gud
+            return;
+        } else {
+            // check for our external address
+            this._checkedExternal = true;
+            this._hasExternal = await this._checkForExternalLokinet();
+            if (this._hasExternal)
+                return;
+        }
 
-  /// @brief make an http.Agent that uses lokinet
-  httpAgent(options)
-  {
-    this._log("httpAgent");
-    return new _Agent(this, options);
-  }
+        if (this._ctx) {
+            return;
+        }
 
-  httpsAgent(options)
-  {
-    this._log("httpsAgent");
-    return new _SecureAgent(this, options);
-  }
 
-  _make_udp_socket(socket_id, remote_host, remote_port, local_ip, local_port)
-  {
-    this._log("_make_udp_socket");
-    const c_socket = dgram.createSocket('udp4');
-    const recv = (pkt_info) => {
-      c_socket.sendto(Buffer.from(pkt_info.data), local_port, local_ip);
-    };
-    const timeout = (info) => {
-      this._log(`udp stream timed out: ${info.host}:${info.port}`);
-      c_socket.close();
-    };
-    c_socket.on('message', (msg, rinfo) => {
-      this._ctx.udp_flow_send(msg, socket_id, remote_port, remote_host);
-    });
-    c_socket.bind(0, local_ip);
-    c_socket.on('error', () => {
-      c_socket.close();
-    });
-    return [c_socket, recv, timeout];
-  }
+        // lokinet.set_logger(this._log);
 
-  /// @brief bind udp socket on our .loki address on port
-  /// does nothing for external lokinet
-  /// @return a udp socket id for use
-  async udpIntercept(port, toHost)
-  {
-    this._log("udpIntercept");
-    if(this._hasExternal)
-      return new Promise((resolve, reject) => { resolve(null); });
-    const ip = toHost;
-    const udp = dgram.createSocket('udp4');
-    let bindsock = (sock, resolve, reject) => {
-      sock.bind(0, ip, () => {
+        if (lokinet == null)
+            throw "external lokinet not up and we cannot embed lokinet";
 
-        const socket_id = this._ctx.udp_bind(port, (info) => {
-          return this._make_udp_scoket(info.socket_id, info.host, info.port, ip, port).slice(1);
+        this._ctx = new lokinet.Context();
+
+
+        const bootstrap = this._opts.bootstrap || "bootstrap.signed";
+        const data = await readFile(bootstrap);
+        const rc = new Uint8Array(data).buffer;
+        this._ctx.bootstrap(rc);
+        this._ctx.start();
+
+    }
+
+    /// @brief stop lokinet
+    stop() {
+        this._log("start");
+        if (this._ctx) {
+            this._ctx.stop();
+            this._ctx = null;
+        }
+    }
+
+    /// @brief get our .loki address
+    async hostname() {
+        this._log("hostname");
+        if (this._hasExternal) {
+            const addrs = await _resolver.resolveCname("localhost.loki");
+            return addrs[0];
+        } else
+            return this._ctx.addr();
+    }
+
+    /// @brief connect to host:port with a connect callback
+    connect(port, host, callback) {
+        this._log("connect");
+        if (this._hasExternal) {
+            return this._connectExternal(port, host, callback);
+        } else
+            return this._connectEmbedded(port, host, callback);
+    }
+
+    _connectExternal(port, host, callback) {
+        return connect(port, host, callback);
+    }
+
+    _connectEmbedded(port, host, callback) {
+        const stream_info = this._ctx.outbound_stream(`${host}:${port}`);
+        console.log(`embedded via ${stream_info.host}:${stream_info.port}`);
+        const conn = connect(stream_info.port, stream_info.host, callback);
+        conn.on("error", (err) => {
+            console.log(err);
+            conn.end();
         });
-        sock.on('close', () => {
-          this._ctx.udp_close(socket_id);
+        conn.on('end', () => {
+            if (this._ctx) {
+                this._ctx.close_stream(stream_info.id);
+            }
         });
-
-        if(socket_id == 0)
-        {
-          reject("could not bind");
-          return;
-        }
-        resolve(socket_id);
-      });
-    };
-    return new Promise((resolve, reject) => {
-        bindsock(udp, resolve, reject);
-    });
-  }
-
-  /// @brief given a udp hostname and port turn it into an [ip, port]
-  async resolveUDP(socket_id, host, port)
-  {
-    this._log("resolveUDP");
-    if(socket_id)
-    {
-      const localip =  await this.localip();
-      return new Promise((resolve, reject) => {
-        let obj = {};
-        try
-        {
-          const infos = this._make_udp_socket(socket_id, host, port, localip, port);
-          resolve([localip, infos[0].address().port]);
-
-        }
-        catch(ex)
-        {
-          reject(ex)
-        }
-      });
+        return conn;
     }
-    else
-    {
-      const addrs = await _resolver.resolve(host);
-      return [addrs[0], port];
+
+    /// @brief make an http.Agent that uses lokinet
+    httpAgent(options) {
+        this._log("httpAgent");
+        return new _Agent(this, options);
     }
-  }
 
-  /// @brief expose udp ip:port on lokinet via exposePort on localport
-  /// @return socket id
-  permitUDP(port, ip, exposePort, localport)
-  {
-    const _on_new_flow = (info) => {
-      const sock = dgram.createSocket('udp4');
-      const remotehost = info.host;
-      const remoteport = info.port;
-      const socket_id = info.id;
+    httpsAgent(options) {
+        this._log("httpsAgent");
+        return new _SecureAgent(this, options);
+    }
 
-      sock.bind({port: localport, address: ip});
+    _make_udp_socket(socket_id, remote_host, remote_port, local_ip, local_port) {
+        this._log("_make_udp_socket");
+        const c_socket = dgram.createSocket('udp4');
+        const recv = (pkt_info) => {
+            c_socket.sendto(Buffer.from(pkt_info.data), local_port, local_ip);
+        };
+        const timeout = (info) => {
+            this._log(`udp stream timed out: ${info.host}:${info.port}`);
+            c_socket.close();
+        };
+        c_socket.on('message', (msg, rinfo) => {
+            this._ctx.udp_flow_send(msg, socket_id, remote_port, remote_host);
+        });
+        c_socket.bind(0, local_ip);
+        c_socket.on('error', () => {
+            c_socket.close();
+        });
+        return [c_socket, recv, timeout];
+    }
 
-      const timeout = (info) => {
-        this._log(`socket timeout: ${info.host}`);
-        sock.close();
-      };
+    /// @brief bind udp socket on our .loki address on port
+    /// does nothing for external lokinet
+    /// @return a udp socket id for use
+    async udpIntercept(port, toHost) {
+        this._log("udpIntercept");
+        if (this._hasExternal)
+            return new Promise((resolve, reject) => {
+                resolve(null);
+            });
+        const ip = toHost;
+        const udp = dgram.createSocket('udp4');
+        let bindsock = (sock, resolve, reject) => {
+            sock.bind(0, ip, () => {
 
-      sock.on("message", (msg, rinfo) => {
-        this._log(`sock got msg: ${msg}`);
-        this._ctx.udp_flow_send(msg, socket_id, remotehost, remoteport);
-      });
+                const socket_id = this._ctx.udp_bind(port, (info) => {
+                    return this._make_udp_scoket(info.socket_id, info.host, info.port, ip, port).slice(1);
+                });
+                sock.on('close', () => {
+                    this._ctx.udp_close(socket_id);
+                });
 
-      const recv = (pkt_info) => {
-        this._log(`sock send msg to ${ip}:${port}`);
-        sock.sendto(pkt_info.data, port, ip);
-      };
+                if (socket_id == 0) {
+                    reject("could not bind");
+                    return;
+                }
+                resolve(socket_id);
+            });
+        };
+        return new Promise((resolve, reject) => {
+            bindsock(udp, resolve, reject);
+        });
+    }
 
-      return [recv, timeout];
+    /// @brief given a udp hostname and port turn it into an [ip, port]
+    async resolveUDP(socket_id, host, port) {
+        this._log("resolveUDP");
+        if (socket_id) {
+            const localip = await this.localip();
+            return new Promise((resolve, reject) => {
+                let obj = {};
+                try {
+                    const infos = this._make_udp_socket(socket_id, host, port, localip, port);
+                    resolve([localip, infos[0].address().port]);
 
-    };
-    return this._ctx.udp_bind(exposePort, (info) => {
-      try
-      {
-       return _on_new_flow(info);
-      }
-      catch(ex)
-      {
-        this._log(`failed to handle new flow: ${ex}`);
-      }
-    });
-  }
+                } catch (ex) {
+                    reject(ex)
+                }
+            });
+        } else {
+            const addrs = await _resolver.resolve(host);
+            return [addrs[0], port];
+        }
+    }
 
-  /// @brief permit inbound tcp stream on port
-  /// @return a function to unmap the stream
-  async permitInboundTCP(port)
-  {
-    this._log("permitInboundTCP");
-    return new Promise((resolve, reject) => {
-      var id;
-      if(!this._hasExternal)
-      {
-        id = this._ctx.inbound_stream(port);
-      }
-      resolve(() => {
-        if(id)
-          this._ctx.close_stream(id);
-      });
-    });
-  }
+    /// @brief expose udp ip:port on lokinet via exposePort on localport
+    /// @return socket id
+    permitUDP(port, ip, exposePort, localport) {
+        const _on_new_flow = (info) => {
+            const sock = dgram.createSocket('udp4');
+            const remotehost = info.host;
+            const remoteport = info.port;
+            const socket_id = info.id;
 
-  /// @brief returns true if an ip address is accessable via lokinet interface
-  async ownsAddress(ip)
-  {
-    if(this._hasExternal)
-      return ip === await this.localip();
-    else
-      return ip.startsWith("192.168.")|| ip.startsWith("10.");
-  }
+            sock.bind({
+                port: localport,
+                address: ip
+            });
+
+            const timeout = (info) => {
+                this._log(`socket timeout: ${info.host}`);
+                sock.close();
+            };
+
+            sock.on("message", (msg, rinfo) => {
+                this._log(`sock got msg: ${msg}`);
+                this._ctx.udp_flow_send(msg, socket_id, remotehost, remoteport);
+            });
+
+            const recv = (pkt_info) => {
+                this._log(`sock send msg to ${ip}:${port}`);
+                sock.sendto(pkt_info.data, port, ip);
+            };
+
+            return [recv, timeout];
+
+        };
+        return this._ctx.udp_bind(exposePort, (info) => {
+            try {
+                return _on_new_flow(info);
+            } catch (ex) {
+                this._log(`failed to handle new flow: ${ex}`);
+            }
+        });
+    }
+
+    /// @brief permit inbound tcp stream on port
+    /// @return a function to unmap the stream
+    async permitInboundTCP(port) {
+        this._log("permitInboundTCP");
+        return new Promise((resolve, reject) => {
+            var id;
+            if (!this._hasExternal) {
+                id = this._ctx.inbound_stream(port);
+            }
+            resolve(() => {
+                if (id)
+                    this._ctx.close_stream(id);
+            });
+        });
+    }
+
+    /// @brief returns true if an ip address is accessable via lokinet interface
+    async ownsAddress(ip) {
+        if (this._hasExternal)
+            return ip === await this.localip();
+        else
+            return ip.startsWith("192.168.") || ip.startsWith("10.");
+    }
 
 };
 
-class _Agent extends Agent
-{
-  constructor(lokinet, options)
-  {
-    super(options);
-    this._ctx = lokinet;
-  }
+class _Agent extends Agent {
+    constructor(lokinet_ctx, options) {
+        super(options);
+        this._ctx = lokinet_ctx;
+    }
 
-  createConnection(options, callback)
-  {
-    const conn = this._ctx.connect(options.port || 80, options.host, () => {
-      if(callback)
-      {
-        callback(null, conn);
-      }
-    });
-    return conn;
-  }
+    createConnection(options, callback) {
+        const conn = this._ctx.connect(options.port || 80, options.host, () => {
+            if (callback) callback(null, conn);
+        });
+        return conn;
+    }
 };
 
-class _SecureAgent extends SecureAgent
-{
-  constructor(lokinet, options)
-  {
-    super(options);
-    this._ctx = lokinet;
-  }
+class _SecureAgent extends SecureAgent {
+    constructor(lokinet_ctx, options) {
+        super(options);
+        this._ctx = lokinet_ctx;
+    }
 
-  createConnection(options, callback)
-  {
-    const conn = new TLSSocket(this._ctx.connect(options.port || 443, options.host, () => {
-      if(callback) callback(null, conn);
-    }));
-    return conn;
-  }
+    createConnection(options, callback) {
+        const conn = new TLSSocket(this._ctx.connect(options.port || 443, options.host, () => {
+            if (callback) callback(null, conn);
+        }));
+        return conn;
+    }
 }
 
 module.exports = {
-  "Lokinet": Lokinet,
-  "hex_to_base32z": hex_to_base32z
+    "Lokinet": Lokinet,
+    "hex_to_base32z": hex_to_base32z
 };
