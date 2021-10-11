@@ -38,6 +38,38 @@ if (lokinet) {
     hex_to_base32z = lokinet.hex_to_base32z;
 }
 
+const SDP = require('sdp');
+
+
+/// get the ip/port of the first ice candidate in this data
+const _extractAddrFromSDPData = (sdp) => {
+    const lines = SDP.splitLines(sdp);
+    for (let line of lines) {
+        if (line.indexOf('a=') != 0)
+            continue;
+        const parsed = SDP.parseCandidate(line);
+        return [parsed.ip, parsed.port];
+    }
+    throw 'invalid sdp data';
+};
+
+
+/// set remote ip/port of an sdp data blob, return a new one with the new data
+const _rewriteSDPAddr = (sdp, newaddr, newport) => {
+    let rewritten = '';
+    const lines = SDP.splitLines(sdp);
+    for (let line of lines) {
+        if (line.indexOf('a=') == 0) {
+            let parsed = SDP.parseCandidate(line);
+            parsed.ip = newaddr;
+            parsed.port = newport;
+            line = SDP.writeCandidate(parserd);
+        }
+        rewritten += `${line}\r\n`;
+    }
+    return rewritten;
+};
+
 //// @brief a lokinet wrapper that will spawn a liblokinet if an external lokinet is not detected
 class Lokinet {
 
@@ -332,6 +364,47 @@ class Lokinet {
         else
             return ip.startsWith("192.168.") || ip.startsWith("10.");
     }
+
+    /// @brief accepts in a SDP data for an ice candidate from our local machine
+    /// if the sdp is for a valid candidate it will do the rqeuire rewrite and return the new data
+    /// otherwwise it will yield null
+    async filterOwnSDP(sdp) {
+        if (!sdp)
+            return null;
+        const lokiaddr = await this.localaddr();
+        const addr = _extractAddrFromSDPData(sdp);
+        const ip = addr[0];
+        const port = addr[1];
+        const allow = await this.ownsAddress(ip);
+        const externPort = port;
+        if (this._ctx) {
+            // TODO: embedded mode needs additional rewrite
+            // set up externPort here
+            throw 'filtering SDP data without external lokinet is not implemented at this time';
+        }
+        return _rewriteSDPAddr(sdp, lokiaddr, externPort);
+    }
+
+    /// @brief take in another's SDP dat and do any rewrites needed before we use it
+    /// if we dont want to use it we yield null otherwise we yield the new sdp data
+    async acceptOtherSDP(sdp) {
+        if (!sdp)
+            return null;
+        const addr = _extractAddrFromSDP(sdp);
+        const lokiaddr = addr[0];
+        const port = addr[1];
+
+        if (this._hasExternal) {
+            const addrs = await _reslver.resolve(lokiaddr);
+            const ip = addrs[0];
+            return _rewriteSDPAddr(sdp, ip, port);
+        } else {
+            // TODO: implement me
+            throw 'accepting SDP data without external lokinet not implmented at this time';
+        }
+    }
+
+
 
 };
 
