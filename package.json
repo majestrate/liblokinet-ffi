@@ -17,7 +17,8 @@
     "rebuild-release": "npm run clean && npm run build-release",
     "compile:": "npm run compile:native",
     "compile": "npm run compile:$BUILD_TARGET",
-    "install": "npm run compile"
+    "git-submodule-init": "git submodule update --init --recursive",
+    "install": "npm run git-submodule-init && npm run compile"
   },
   "repository": {
     "type": "git",
