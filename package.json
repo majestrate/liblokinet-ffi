@@ -16,7 +16,7 @@
     "rebuild-release": "yarn clean && yarn build-release",
     "compile:": "yarn compile:native",
     "compile": "yarn compile:$BUILD_TARGET",
-    "build": "yarn compile"
+    "install": "yarn compile"
   },
   "repository": {
     "type": "git",
