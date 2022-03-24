@@ -12,21 +12,20 @@ get submdoules:
 
 nodejs:
 
-    $ npm install
+    $ yarn install --frozen-lockfile
 
 nodejs (faster):
 
-    $ CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) npm install
+    $ CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) yarn install --frozen-lockfile
 
 ## running
 
 run the nodejs demo:
 
-    $ npm start
-
+    $ yarn start
 
 ## development
 
 making a dev build:
 
-    $ CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) npm run compile:dev
+    $ CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) yarn compile:dev
