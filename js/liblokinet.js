@@ -14,6 +14,7 @@ const dns = promises;
 
 let lokinet = null;
 let hex_to_base32z = (str) => {};
+let set_log_level = (str) => {};
 
 try {
     lokinet = require('bindings')('liblokinet_js');
@@ -36,6 +37,7 @@ _resolver.setServers(['127.3.2.1', '127.0.0.1']);
 
 if (lokinet) {
     hex_to_base32z = lokinet.hex_to_base32z;
+    set_log_level = lokinet.set_log_level;
 }
 
 const SDP = require('sdp');
@@ -438,5 +440,6 @@ class _SecureAgent extends SecureAgent {
 
 module.exports = {
     "Lokinet": Lokinet,
-    "hex_to_base32z": hex_to_base32z
+    "hex_to_base32z": hex_to_base32z,
+    "set_log_level": set_log_level,
 };

@@ -10,3 +10,4 @@ export class Lokinet {
 }
 
 export function hex_to_base32z(hex: string): string;
+export function set_log_level(level: string): void;

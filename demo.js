@@ -3,10 +3,15 @@ import { Lokinet } from './liblokinet.js';
 import fetch from 'node-fetch';
 import { get } from 'http';
 */
-const Lokinet = require('./liblokinet.js').Lokinet;
+const liblokinet = require('./js/liblokinet.js');
+const Lokinet = liblokinet.Lokinet;
 const get = require('http').get;
 
+// make log shut up
+liblokinet.set_log_level("none");
+
 const runit = async (opts) => {
+    console.log("starting up lokinet...");
     let ctx = new Lokinet(opts);
 
     await ctx.start();
@@ -34,7 +39,7 @@ const runit = async (opts) => {
     req.end();
 };
 
-runit();
+//runit();
 runit({
     alwaysEmbed: true
 });
