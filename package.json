@@ -26,8 +26,7 @@
   "license": "GPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/majestrate/liblokinet-ffi/issues"
-  },
-  "module": "js/liblokinet.js",
+  }
   "types": "ts/liblokinet.d.ts",
   "homepage": "https://github.com/majestrate/liblokinet-ffi#readme",
   "dependencies": {
