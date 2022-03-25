@@ -160,11 +160,15 @@ class Lokinet {
 
         this._ctx = new lokinet.Context();
 
-
-        const bootstrap = this._opts.bootstrap || "bootstrap.signed";
-        const data = await readFile(bootstrap);
-        const rc = new Uint8Array(data).buffer;
-        this._ctx.bootstrap(rc);
+        if (this._opts.bootstrapBase64Data) {
+            const rc = new Buffer(this._opts.bootstrapBase64Data, 'base64');
+            this._ctx.bootstrap(rc);
+        } else {
+            const bootstrap = this._opts.bootstrap || "bootstrap.signed";
+            const data = await readFile(bootstrap);
+            const rc = new Uint8Array(data).buffer;
+            this._ctx.bootstrap(rc);
+        }
         this._ctx.start();
 
     }
