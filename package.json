@@ -10,7 +10,7 @@
     "compile:linux": "yarn compile:native",
     "start": "yarn compile:dev && node demo.js",
     "format:cpp": "clang-format -i node/lokinet_ffi.cpp",
-    "format:ts": "for f in {t,j}s/*.*s ; do yarn exec js-beautify -- -r -f $f ; done",
+    "format:ts": "for f in {,{t,j}s}/*.*s ; do yarn exec js-beautify -- -r -f $f ; done",
     "format": "yarn format:cpp && yarn format:ts",
     "build-release": "yarn compile:native",
     "rebuild-release": "yarn clean && yarn build-release",
@@ -26,7 +26,7 @@
   "license": "GPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/majestrate/liblokinet-ffi/issues"
-  }
+  },
   "types": "ts/liblokinet.d.ts",
   "homepage": "https://github.com/majestrate/liblokinet-ffi#readme",
   "dependencies": {
