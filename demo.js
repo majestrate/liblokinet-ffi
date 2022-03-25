@@ -3,7 +3,7 @@ import { Lokinet } from './liblokinet.js';
 import fetch from 'node-fetch';
 import { get } from 'http';
 */
-const liblokinet = require('./js/liblokinet.js');
+const liblokinet = require('./index.js');
 const Lokinet = liblokinet.Lokinet;
 const get = require('http').get;
 
